@@ -118,6 +118,70 @@ NAN_METHOD(DataBase::SortBySizeAscent) {
 	All_Sort_Routing(DataBase)
 	self->sortBySizeAscent;
 }
+
+NAN_METHOD(DataBase::SortBySizeDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortBySizeDescent();
+}
+
+NAN_METHOD(DataBase::SortByCTimeAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByCTimeAscent();
+}
+
+NAN_METHOD(DataBase::SortByCTimeDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByCTimeDescent();
+}
+
+NAN_METHOD(DataBase::SortByMTimeAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByMTimeAscent();
+}
+
+NAN_METHOD(DataBase::SortByMTimeDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByMTimeDescent();
+}
+
+NAN_METHOD(DataBase::SortByTitleAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByTitleAscent();
+}
+
+NAN_METHOD(DataBase::SortByTitleDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByTitleDesscent();
+}
+
+NAN_METHOD(DataBase::SortByFormatAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByFormatAscent();
+}
+
+NAN_METHOD(DataBase::SortByFormatDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByFormatDescent();
+}
+
+NAN_METHOD(DataBase::SortByPathAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByPathAscent();
+}
+
+NAN_METHOD(DataBase::SortByPathDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByPathDescent();
+}
+
+NAN_METHOD(DataBase::SetPivot) {
+	DataBase* self = Nan::ObjectWrap::Unwrap(info.This());
+	if (!info[0]->IsBoolean()) {
+		return Nan::ThrowSyntaxError(Nan::New("setPivot has no parameter").ToLocalChecked());
+	}
+	self->setPivot(info[0]->BooleanValue(info.GetIsolate()));
+}
+
 DataBase::~DataBase()
 {
 	free(rContainer.results);
