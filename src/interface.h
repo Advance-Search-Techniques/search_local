@@ -50,6 +50,13 @@ extern "C" {
 					return rc
 
 
+#define All_Sort_Routing(target)										   \
+target* self = Nan::ObjectWrap::Unwrap<target>(info.This());		   	   \
+	if (!info[0]->IsUndefined()) {										   \
+		return Nan::ThrowSyntaxError(									   \
+			Nan::New("all sort methods have no parameter").ToLocalChecked()\
+		);																   \
+	}
 // StringContainer contains contents from the usual select * query
 typedef std::vector<std::vector<std::string>> StringContainer;
 
@@ -87,7 +94,21 @@ public:
 	static NAN_METHOD(Close);
 	static NAN_METHOD(Execute);
 	static NAN_METHOD(Commit);
-	static NAN_METHOD(Result);
+	static NAN_METHOD(SortByScoreAscent);
+	static NAN_METHOD(SortByScoreDescent);
+	static NAN_METHOD(SortBySizeAscent);
+	static NAN_METHOD(SortBySizeDescent);
+	static NAN_METHOD(SortByCTimeAscent);
+	static NAN_METHOD(SortByCTimeDescent);
+	static NAN_METHOD(SortByMTimeAscent);
+	static NAN_METHOD(SortByMTimeDescent);
+	static NAN_METHOD(SortByTitleAscent);
+	static NAN_METHOD(SortByTitleDescent);
+	static NAN_METHOD(SortByFormatAscent);
+	static NAN_METHOD(SortByFormatDescent);
+	static NAN_METHOD(SortByPathAscent);
+	static NAN_METHOD(SortByPathDescent);
+	static NAN_METHOD(SetPivot);
 	std::vector<InfoContainer> icArray;
 	DataBase()=default;
 	~DataBase();

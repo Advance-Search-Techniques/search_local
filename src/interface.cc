@@ -92,6 +92,32 @@ NAN_METHOD(DataBase::Execute) {
 		info.GetReturnValue().Set(rc);
 	}
 }
+
+NAN_METHOD(DataBase::Commit) {
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
+	if (!info[0]->IsUndefined()) {
+		return Nan::ThrowSyntaxError(
+			Nan::New("commit method has no parameter").ToLocalChecked()
+		);
+	}
+	int rc = self->commit();
+	info.GetReturnValue().Set(rc);
+}
+
+NAN_METHOD(DataBase::SortByScoreAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortByScoreAscent();
+}
+
+NAN_METHOD(DataBase::SortByScoreDescent) {
+	All_Sort_Routing(DataBase)
+	self->sortByScoreDescent();
+}
+
+NAN_METHOD(DataBase::SortBySizeAscent) {
+	All_Sort_Routing(DataBase)
+	self->sortBySizeAscent;
+}
 DataBase::~DataBase()
 {
 	free(rContainer.results);
