@@ -75,7 +75,8 @@ typedef std::vector<std::pair<std::vector<std::string>, std::vector<int64_t>>> I
 //An element of InfoResult
 typedef std::pair<std::vector<std::string>, std::vector<int64_t>> pairResult;
 
-
+template<typename DType>
+using Container = std::vector<DType>;
 /**
  * DataBase is an interface class
  * which wraps some sqlite3 api and
@@ -87,8 +88,6 @@ class DataBase : public Nan::ObjectWrap
 public:
 	static v8::Persistent<v8::FunctionTemplate> constructor;
 	static NAN_MODULE_INIT(Init);
-	static NAN_GETTER(ResultGetter);
-	static NAN_SETTER(ResultSetter);
 	static NAN_METHOD(New);
 	static NAN_METHOD(Open);
 	static NAN_METHOD(Close);
@@ -109,6 +108,10 @@ public:
 	static NAN_METHOD(SortByPathAscent);
 	static NAN_METHOD(SortByPathDescent);
 	static NAN_METHOD(SetPivot);
+	static NAN_METHOD(SetCase);
+	static NAN_METHOD(SetTop);
+	static NAN_METHOD(Search);
+	static NAN_METHOD(GetResult);
 	std::vector<InfoContainer> icArray;
 	DataBase()=default;
 	~DataBase();
@@ -120,7 +123,7 @@ public:
 	int finalize();
 	int close();
 	int execute(const char*);
-	int execute(const char*, const StringContainer&);
+	int execute(const char*, StringContainer&);
 	void commit()
 	{
 		int rc=execute("COMMIT;");
@@ -152,21 +155,20 @@ public:
 	void sortByPathDescent();
 	void sortByPathAscent();
 	void setPivot(bool);
-	InfoResult getInfo();
+	const InfoContainer& getInfo();
 	InfoResult getResult() const;
 	sqlite3* getDB() const { return db; }
 	std::string getError (size_t error)
 	{
 		return std::string(sqlite3_errmsg(db));
 	}
-	void setQuery(std::string q)
+	void setQuery(const std::string& q)
 	{
 		query=q.c_str();
-		/*query = q;*/
 	}
 	void setCase(bool value);
 	void setTop(int value) { top = value; }
-	void queryArraySearch(std::vector<std::string> queries,std::vector<std::string> logics);
+	void queryArraySearch(std::vector<std::string>&& queries,std::vector<std::string>&& logics);
 private:
 	sqlite3* db;
 	sqlite3_stmt* stmt;

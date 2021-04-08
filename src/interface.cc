@@ -18,10 +18,6 @@ NAN_MODULE_INIT(DataBase::Init) {
 	ctor->InstanceTemplate()->SetInternalFieldCount(1);
 	ctor->SetClassName(Nan::New("TextGps").ToLocalChecked());
 
-	Nan::SetAccessor(ctor->InstanceTemplate(),Nan::New("result").ToLocalChecked(),
-	DataBase::ResultGetter,DataBase::ResultSetter);
-
-	Nan::SetPrototypeMethod(ctor,"result",Result);
 	Nan::SetPrototypeMethod(ctor,"open",Open);
 
 	target->Set(context,Nan::New("TextGps").ToLocalChecked(),
@@ -84,8 +80,8 @@ NAN_METHOD(DataBase::Execute) {
 			int rc = self->execute(*Nan::Utf8String(info[0]),stringContainer);
 			info.GetReturnValue().Set(rc);
 		} else {
-			return Nan::ThrowTypeError(Nan::New("To use step,make sure the second
-			 parameter must be array of array"));
+			return Nan::ThrowTypeError(Nan::New("To use step,make sure the second\
+			 parameter must be array of array").ToLocalChecked());
 		}
 	} else {
 		int rc = self->execute(*Nan::Utf8String(info[0]));
@@ -100,8 +96,7 @@ NAN_METHOD(DataBase::Commit) {
 			Nan::New("commit method has no parameter").ToLocalChecked()
 		);
 	}
-	int rc = self->commit();
-	info.GetReturnValue().Set(rc);
+	self->commit();
 }
 
 NAN_METHOD(DataBase::SortByScoreAscent) {
@@ -116,7 +111,7 @@ NAN_METHOD(DataBase::SortByScoreDescent) {
 
 NAN_METHOD(DataBase::SortBySizeAscent) {
 	All_Sort_Routing(DataBase)
-	self->sortBySizeAscent;
+	self->sortBySizeAscent();
 }
 
 NAN_METHOD(DataBase::SortBySizeDescent) {
@@ -151,7 +146,7 @@ NAN_METHOD(DataBase::SortByTitleAscent) {
 
 NAN_METHOD(DataBase::SortByTitleDescent) {
 	All_Sort_Routing(DataBase)
-	self->sortByTitleDesscent();
+	self->sortByTitleDescent();
 }
 
 NAN_METHOD(DataBase::SortByFormatAscent) {
@@ -175,13 +170,103 @@ NAN_METHOD(DataBase::SortByPathDescent) {
 }
 
 NAN_METHOD(DataBase::SetPivot) {
-	DataBase* self = Nan::ObjectWrap::Unwrap(info.This());
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
 	if (!info[0]->IsBoolean()) {
 		return Nan::ThrowSyntaxError(Nan::New("setPivot has no parameter").ToLocalChecked());
 	}
 	self->setPivot(info[0]->BooleanValue(info.GetIsolate()));
 }
 
+NAN_METHOD(DataBase::SetCase) {
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
+	if (!info[0]->IsBoolean()) {
+		return Nan::ThrowSyntaxError(Nan::New("setPivot has no parameter").ToLocalChecked());
+	}
+	self->setCase(info[0]->BooleanValue(info.GetIsolate()));
+}
+
+NAN_METHOD(DataBase::SetTop) {
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+	if (!info[0]->IsInt32() || !info[0]->IsUint32() || !info[0]->IsBigInt()) {
+		return Nan::ThrowTypeError(Nan::New("Top index number must be an integer").ToLocalChecked());
+	}
+
+	if (info[0]->NumberValue(context).FromJust() < 0) {
+		return Nan::ThrowRangeError(Nan::New("Top range must greater than zero").ToLocalChecked());
+	}
+
+	self->setTop(static_cast<int>(info[0]->NumberValue(context).FromJust()));
+}
+
+NAN_METHOD(DataBase::Search) {
+	if (!info[0]->IsArray() || !info[1]->IsArray()) {
+		return Nan::ThrowTypeError(Nan::New("both queries and logics must be array of string(s)").ToLocalChecked());
+	}
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+	std::vector<std::string> queries,logics;
+	v8::Local<v8::Object> queryObj = info[0]->ToObject(context).ToLocalChecked();
+	v8::Local<v8::Array> queryProps = queryObj->GetPropertyNames(context).ToLocalChecked();
+	for (uint32_t i = 0;i<queryProps->Length();++i) {
+		queries.push_back(*Nan::Utf8String(queryProps->Get(context,i).ToLocalChecked()));
+	}
+	v8::Local<v8::Object> logicObj = info[1]->ToObject(context).ToLocalChecked();
+	v8::Local<v8::Array> logicProps = logicObj->GetPropertyNames(context).ToLocalChecked();
+	for (uint32_t i = 0;i<logicProps->Length();++i) {
+		logics.push_back(*Nan::Utf8String(logicProps->Get(context,i).ToLocalChecked()));
+	}
+	self->queryArraySearch(std::move(queries),std::move(logics));
+}
+
+NAN_METHOD(DataBase::GetResult) {
+	if (!info[0].IsEmpty()) {
+		return Nan::ThrowTypeError(Nan::New("GetResult method has no parameter").ToLocalChecked());
+	}
+
+	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
+	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+	v8::Local<v8::Array> contents = Nan::New<v8::Array>();
+	v8::Local<v8::Array> content = Nan::New<v8::Array>();
+	v8::Local<v8::Array> locs = Nan::New<v8::Array>();
+	v8::Local<v8::Array> loc = Nan::New<v8::Array>();
+	v8::Local<v8::Object> points = Nan::New<v8::Object>();
+	v8::Local<v8::Array> scores = Nan::New<v8::Array>();
+
+	const InfoContainer& container = self->getInfo();
+	uint32_t i=0;
+	uint32_t j;
+	for (const InfoTuple& tuple : container) {
+		j = 0;
+		for (const std::string& each : std::get<0>(tuple)) {
+			content->Set(context,j++,Nan::New(each).ToLocalChecked());
+		}
+		contents->Set(context,i,content);
+		content.Clear();
+		j=0;
+		for (const std::pair<int64_t,int64_t>& each : std::get<1>(tuple)) {
+			points->Set(context,Nan::New("start").ToLocalChecked(),
+			Nan::New(static_cast<int32_t>(each.first)));
+			points->Set(context,Nan::New("end").ToLocalChecked(),
+			Nan::New(static_cast<int32_t>(each.second)));
+			loc->Set(context,j++,points);
+			points.Clear();
+		}
+		locs->Set(context,i,loc);
+		loc.Clear();
+		scores->Set(context,i,Nan::New(static_cast<int32_t>(*(std::get<2>(tuple).end()-1))));
+		i=i+1;
+	}
+	v8::Local<v8::Object> result = Nan::New<v8::Object>();
+	result->Set(context,Nan::New("contents").ToLocalChecked(),
+	contents);
+	result->Set(context,Nan::New("locs").ToLocalChecked(),
+	locs);
+	result->Set(context,Nan::New("scores").ToLocalChecked(),
+	scores);
+
+	info.GetReturnValue().Set(result);
+}
 DataBase::~DataBase()
 {
 	free(rContainer.results);
@@ -249,7 +334,7 @@ int DataBase::execute(const char* sql)
 	return rc;
 }
 
-int DataBase::execute(const char* sql, const StringContainer& sc)
+int DataBase::execute(const char* sql, StringContainer& sc)
 {
 	int rc = prepare(sql);
 	for (std::vector<std::string>& params : sc)
@@ -440,85 +525,85 @@ void DataBase::virtualFetchAll()
 
 void DataBase::sortByScoreDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult&b) {
-		return *(a.second.end() - 1) > * (b.second.end() - 1); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple&b) {
+		return *(std::get<2>(a).end() - 1) > * (std::get<2>(b).end() - 1); });
 }
 
 void DataBase::sortByScoreAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return *(a.second.end() - 1) < * (b.second.end() - 1); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return *(std::get<2>(a).end() - 1) < * (std::get<2>(b).end() - 1); });
 }
 
 void DataBase::sortBySizeDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[5]) > std::stoll(b.first[5]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[5]) > std::stoll(std::get<0>(b)[5]); });
 }
 
 void DataBase::sortBySizeAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[5]) < std::stoll(b.first[5]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[5]) < std::stoll(std::get<0>(b)[5]); });
 }
 
 void DataBase::sortByCTimeDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[2]) > std::stoll(b.first[2]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[2]) > std::stoll(std::get<0>(b)[2]); });
 }
 
 void DataBase::sortByCTimeAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[2]) < std::stoll(b.first[2]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[2]) < std::stoll(std::get<0>(b)[2]); });
 }
 
 void DataBase::sortByMTimeDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[3]) > std::stoll(b.first[3]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[3]) > std::stoll(std::get<0>(b)[3]); });
 }
 
 void DataBase::sortByMTimeAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return std::stoll(a.first[3]) < std::stoll(b.first[3]); });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::stoll(std::get<0>(a)[3]) < std::stoll(std::get<0>(b)[3]); });
 }
 
 void DataBase::sortByTitleDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[0] < b.first[0]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[0] < std::get<0>(b)[0]; });
 }
 
 void DataBase::sortByTitleAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[0] > b.first[0]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[0] > std::get<0>(b)[0]; });
 }
 void DataBase::sortByFormatDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[1] < b.first[1]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[1] < std::get<0>(b)[1]; });
 }
 
 void DataBase::sortByFormatAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[1] > b.first[1]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[1] > std::get<0>(b)[1]; });
 }
 
 void DataBase::sortByPathDescent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[4] < b.first[4]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[4] < std::get<0>(b)[4]; });
 }
 
 void DataBase::sortByPathAscent()
 {
-	std::stable_sort(ir.begin(), ir.end(), [](const pairResult& a, const pairResult& b) {
-		return a.first[4] > b.first[4]; });
+	std::stable_sort(ic.begin(), ic.end(), [](const InfoTuple& a, const InfoTuple& b) {
+		return std::get<0>(a)[4] > std::get<0>(b)[4]; });
 }
 
 void DataBase::setPivot(bool value)
@@ -526,11 +611,10 @@ void DataBase::setPivot(bool value)
 	pivot = value;
 }
 
-InfoResult DataBase::getInfo()
+const InfoContainer& DataBase::getInfo()
 {
-	containerToResult();
 	sortByScoreDescent();
-	return ir;
+	return ic;
 }
 
 InfoResult DataBase::getResult() const
@@ -603,7 +687,7 @@ InfoResult DataBase::getResult() const
 //						});
 //					std::stable_sort(std::get<1>(temp).begin(), std::get<1>(temp).end(),
 //						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-//							return a.first < b.first;
+//							return std::get<0>(a) < std::get<0>(b);
 //						});
 //					ic.push_back(temp);
 //				}
@@ -629,7 +713,7 @@ InfoResult DataBase::getResult() const
 //						});
 //					std::stable_sort(std::get<1>(temp).begin(), std::get<1>(temp).end(),
 //						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-//							return a.first < b.first;
+//							return std::get<0>(a) < std::get<0>(b);
 //						});
 //					ic.push_back(temp);
 //				}
@@ -662,13 +746,13 @@ InfoResult DataBase::getResult() const
 //	icArray.clear();
 //}
 
-void DataBase::queryArraySearch(std::vector<std::string> queries, std::vector<std::string> logics)
+void DataBase::queryArraySearch(std::vector<std::string>&& queries, std::vector<std::string>&& logics)
 {
 	int rc;
 	std::string sqls = "select func(test) from test where content match ";
 	icArray.clear();
 	ic.clear();
-	for (auto query : queries)
+	for (std::string& query : queries)
 	{
 		setQuery(query);
 		std::string queryWithSpace = insertSpace(query);
@@ -723,7 +807,7 @@ void DataBase::queryArraySearch(std::vector<std::string> queries, std::vector<st
 						std::back_inserter(std::get<1>(*it1)));
 					std::stable_sort(std::get<1>(*it1).begin(), std::get<1>(*it1).end(),
 						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-							return a.first < b.first; });
+							return std::get<0>(a) < std::get<0>(b); });
 					temp_ic.push_back(*it1);
 				}
 			}
@@ -755,7 +839,7 @@ void DataBase::queryArraySearch(std::vector<std::string> queries, std::vector<st
 						std::back_inserter(std::get<1>(*it1)));
 					std::stable_sort(std::get<1>(*it1).begin(), std::get<1>(*it1).end(),
 						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-							return a.first < b.first; });
+							return std::get<0>(a) < std::get<0>(b); });
 					temp_ic.push_back(*it1);
 				}
 				if (it1 == ic.end() && it2 != icArray[i + 1].end())
