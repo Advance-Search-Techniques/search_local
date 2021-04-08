@@ -1,7 +1,7 @@
 #include "interface.h"
 
 NAN_MODULE_INIT(InitModule) {
-    Vector::Init(target);
+    DataBase::Init(target);
 }
 
 NODE_MODULE(search,InitModule)

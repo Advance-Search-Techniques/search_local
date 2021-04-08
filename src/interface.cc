@@ -19,6 +19,31 @@ NAN_MODULE_INIT(DataBase::Init) {
 	ctor->SetClassName(Nan::New("TextGps").ToLocalChecked());
 
 	Nan::SetPrototypeMethod(ctor,"open",Open);
+	Nan::SetPrototypeMethod(ctor,"close",Close);
+	Nan::SetPrototypeMethod(ctor,"execute",Execute);
+	Nan::SetPrototypeMethod(ctor,"commit",Commit);
+	Nan::SetPrototypeMethod(ctor,"sortByScoreAscent",SortByScoreAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByScoreDescent",SortByScoreDescent);
+	Nan::SetPrototypeMethod(ctor,"sortBySizeAscent",SortBySizeAscent);
+	Nan::SetPrototypeMethod(ctor,"sortBySizeDescent",SortBySizeDescent);
+	Nan::SetPrototypeMethod(ctor,"sortByCTimeAscent",SortByCTimeAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByCTimeDescent",SortByCTimeDescent);
+	Nan::SetPrototypeMethod(ctor,"sortByMTimeAscent",SortByMTimeAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByMTimeDescent",SortByMTimeDescent);
+	Nan::SetPrototypeMethod(ctor,"sortByTitleAscent",SortByTitleAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByTitleDescent",SortByTitleDescent);
+	Nan::SetPrototypeMethod(ctor,"sortByFormatAscent",SortByFormatAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByFormatDescent",SortByFormatDescent);
+	Nan::SetPrototypeMethod(ctor,"sortByPathAscent",SortByPathAscent);
+	Nan::SetPrototypeMethod(ctor,"sortByPathDescent",SortByPathDescent);
+	Nan::SetPrototypeMethod(ctor,"stopSearching",SetPivot);
+	Nan::SetPrototypeMethod(ctor,"setCase",SetCase);
+	Nan::SetPrototypeMethod(ctor,"setTop",SetTop);
+	Nan::SetPrototypeMethod(ctor,"search",Search);
+	Nan::SetPrototypeMethod(ctor,"getResult",GetResult);
+
+
+	
 
 	target->Set(context,Nan::New("TextGps").ToLocalChecked(),
 	ctor->GetFunction(context).ToLocalChecked());
