@@ -156,7 +156,6 @@ public:
 	void sortByPathAscent();
 	void setPivot(bool);
 	const InfoContainer& getInfo();
-	InfoResult getResult() const;
 	sqlite3* getDB() const { return db; }
 	std::string getError (size_t error)
 	{

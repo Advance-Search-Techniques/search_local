@@ -53,8 +53,9 @@ NAN_MODULE_INIT(DataBase::Init) {
 NAN_METHOD(DataBase::New) {
 	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
 	if (!info.IsConstructCall()) {
-		v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
-		info.GetReturnValue().Set(cons->NewInstance(context,0,nullptr).ToLocalChecked());
+		// v8::Local<v8::FunctionTemplate> cons = Nan::New<v8::FunctionTemplate>(constructor);
+		// info.GetReturnValue().Set(cons->NewInstance(context,0,nullptr).ToLocalChecked());
+		return Nan::ThrowSyntaxError(Nan::New("must have new keyword").ToLocalChecked());
 	} else {
 		DataBase* database = new DataBase();
 		database->Wrap(info.Holder());
@@ -116,11 +117,11 @@ NAN_METHOD(DataBase::Execute) {
 
 NAN_METHOD(DataBase::Commit) {
 	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
-	if (!info[0]->IsUndefined()) {
-		return Nan::ThrowSyntaxError(
-			Nan::New("commit method has no parameter").ToLocalChecked()
-		);
-	}
+	// if (!info[0]->IsUndefined()) {
+	// 	return Nan::ThrowSyntaxError(
+	// 		Nan::New("commit method has no parameter").ToLocalChecked()
+	// 	);
+	// }
 	self->commit();
 }
 
@@ -245,9 +246,9 @@ NAN_METHOD(DataBase::Search) {
 }
 
 NAN_METHOD(DataBase::GetResult) {
-	if (!info[0].IsEmpty()) {
-		return Nan::ThrowTypeError(Nan::New("GetResult method has no parameter").ToLocalChecked());
-	}
+	// if (!(info[0]->) {
+	// 	return Nan::ThrowTypeError(Nan::New("GetResult method has no parameter").ToLocalChecked());
+	// }
 
 	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
 	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
@@ -641,135 +642,6 @@ const InfoContainer& DataBase::getInfo()
 	sortByScoreDescent();
 	return ic;
 }
-
-InfoResult DataBase::getResult() const
-{
-	return ir;
-}
-
-
-//void DataBase::queryArraySearch(std::vector<std::string> queries, std::vector<std::string> logics)
-//{
-//	int rc;
-//	std::string sqls = "select func(test) from test where content match ";
-//	for (auto query : queries)
-//	{
-//		setQuery(query);
-//		std::string queryWithSpace = insertSpace(query);
-//		std::string sql=sqls + "\'" + queryWithSpace + "\';";
-//		rc = prepare(sql.c_str());
-//		LOGGER
-//		virtualFetchAll();
-//		icArray.push_back(ic);
-//	}
-//	ic=*icArray.begin();
-//	for (size_t i = 0; i < logics.size(); i++)
-//	{
-//		if (!pivot)
-//		{
-//			ic.clear();
-//			icArray.clear();
-//			icTable.clear();
-//			if (rContainer.results != NULL)
-//			{
-//				free(rContainer.results);
-//				rContainer.results=NULL;
-//			}
-//			return;
-//		}
-//		for (const auto& each : ic)
-//		{
-//			icTable.insert(each);
-//		}
-//
-//		for (const auto& each : icArray[i + 1])
-//		{
-//			icTable.insert(each);
-//		}
-//
-//		if (logics[i] == "OR")
-//		{
-//			ic.clear();
-//			size_t totolBuckets = icTable.bucket_count();
-//			for (size_t i = 0; i < totolBuckets; i++)
-//			{
-//				if (icTable.bucket_size(i) == 1)
-//				{
-//					auto it = icTable.begin(i);
-//					ic.push_back(const_cast<InfoTuple&>(*it));
-//				}
-//				if (icTable.bucket_size(i) > 1)
-//				{
-//					InfoTuple temp;
-//					std::get<0>(temp) = std::get<0>(const_cast<InfoTuple&>(*icTable.begin(i)));
-//					std::get<2>(temp).push_back(*std::get<2>(const_cast<InfoTuple&>(*icTable.begin(i))).begin());
-//					std::get<2>(temp).push_back(0);
-//					std::for_each(icTable.begin(i), icTable.end(i), [&temp](const decltype(*icTable.begin(i))& a) {
-//						std::get<1>(temp).insert(std::get<1>(temp).end(),
-//							std::get<1>(const_cast<InfoTuple&>((a))).begin(), 
-//							std::get<1>(const_cast<InfoTuple&>((a))).end());
-//						*(std::get<2>(temp).end() - 1) += *(std::get<2>(const_cast<InfoTuple&>((a))).end() - 1);
-//						});
-//					std::stable_sort(std::get<1>(temp).begin(), std::get<1>(temp).end(),
-//						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-//							return std::get<0>(a) < std::get<0>(b);
-//						});
-//					ic.push_back(temp);
-//				}
-//			}
-//		}
-//		else if (logics[i] == "AND")
-//		{
-//			ic.clear();
-//			size_t totolBuckets = icTable.bucket_count();
-//			for (size_t i = 0; i < totolBuckets; i++)
-//			{
-//				if (icTable.bucket_size(i) > 1)
-//				{
-//					InfoTuple temp;
-//					std::get<0>(temp) = std::get<0>(const_cast<InfoTuple&>(*icTable.begin(i)));
-//					std::get<2>(temp).push_back(*std::get<2>(const_cast<InfoTuple&>(*icTable.begin(i))).begin());
-//					std::get<2>(temp).push_back(0);
-//					std::for_each(icTable.begin(i), icTable.end(i), [&temp](const decltype(*icTable.begin(i))& a) {
-//						std::get<1>(temp).insert(std::get<1>(temp).end(),
-//							std::get<1>(const_cast<InfoTuple&>((a))).begin(),
-//							std::get<1>(const_cast<InfoTuple&>((a))).end());
-//						*(std::get<2>(temp).end() - 1) += *(std::get<2>(const_cast<InfoTuple&>((a))).end() - 1);
-//						});
-//					std::stable_sort(std::get<1>(temp).begin(), std::get<1>(temp).end(),
-//						[](const std::pair<int64_t, int64_t>& a, const std::pair<int64_t, int64_t>& b) {
-//							return std::get<0>(a) < std::get<0>(b);
-//						});
-//					ic.push_back(temp);
-//				}
-//			}
-//		}
-//		else if (logics[i] == "NOT")
-//		{
-//			if (i==0)
-//				ic = icArray[i];
-//			size_t totolBuckets = icTable.bucket_count();
-//			for (size_t i = 0; i < totolBuckets; i++)
-//			{
-//				if (icTable.bucket_size(i) > 1)
-//				{
-//					std::for_each(icTable.begin(i), icTable.end(i),
-//						[this](const decltype(*icTable.begin(i))& a) {
-//							auto it = std::find(ic.begin(), ic.end(), a);
-//							if (it != ic.end())
-//								ic.erase(it);
-//						});
-//				}
-//			}
-//		}
-//		else
-//		{
-//			logger->update(TextGpsLogger::Critical,"Wrong logic");
-//		}
-//		icTable.clear();
-//	}
-//	icArray.clear();
-//}
 
 void DataBase::queryArraySearch(std::vector<std::string>&& queries, std::vector<std::string>&& logics)
 {
