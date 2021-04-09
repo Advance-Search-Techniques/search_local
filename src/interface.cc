@@ -200,7 +200,7 @@ NAN_METHOD(DataBase::SetPivot) {
 	if (!info[0]->IsBoolean()) {
 		return Nan::ThrowSyntaxError(Nan::New("setPivot has no parameter").ToLocalChecked());
 	}
-	self->setPivot(info[0]->BooleanValue(info.GetIsolate()));
+	self->setPivot(info[0]->BooleanValue(info.GetIsolate()->GetCurrentContext()));
 }
 
 NAN_METHOD(DataBase::SetCase) {
@@ -208,7 +208,7 @@ NAN_METHOD(DataBase::SetCase) {
 	if (!info[0]->IsBoolean()) {
 		return Nan::ThrowSyntaxError(Nan::New("setPivot has no parameter").ToLocalChecked());
 	}
-	self->setCase(info[0]->BooleanValue(info.GetIsolate()));
+	self->setCase(info[0]->BooleanValue(info.GetIsolate()->GetCurrentContext()));
 }
 
 NAN_METHOD(DataBase::SetTop) {
