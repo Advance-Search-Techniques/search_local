@@ -40,7 +40,12 @@ extern "C" {
 #define LOGGER
 #endif // DEBUG
 
+#if NODE_MAJOR_VERSION <= 12
+#define GetBoolVal info[0]->BooleanValue(info.GetIsolate()->GetCurrentContext()).FromJust()
+#else
+#define GetBoolVal info[0]->BooleanValue(info.GetIsolate())
 
+#endif
 #define SQLITE3_CODE(rc,db) if (rc!=SQLITE_OK)\
 						 {\
 							sqlite3_errmsg(db);\
