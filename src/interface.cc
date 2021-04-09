@@ -117,11 +117,11 @@ NAN_METHOD(DataBase::Execute) {
 
 NAN_METHOD(DataBase::Commit) {
 	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
-	// if (!info[0]->IsUndefined()) {
-	// 	return Nan::ThrowSyntaxError(
-	// 		Nan::New("commit method has no parameter").ToLocalChecked()
-	// 	);
-	// }
+	if (info.Length() != 0) {
+		return Nan::ThrowSyntaxError(
+			Nan::New("commit method has no parameter").ToLocalChecked()
+		);
+	}
 	self->commit();
 }
 
@@ -246,9 +246,9 @@ NAN_METHOD(DataBase::Search) {
 }
 
 NAN_METHOD(DataBase::GetResult) {
-	// if (!(info[0]->) {
-	// 	return Nan::ThrowTypeError(Nan::New("GetResult method has no parameter").ToLocalChecked());
-	// }
+	if (info.Length() != 0) {
+		return Nan::ThrowTypeError(Nan::New("GetResult method has no parameter").ToLocalChecked());
+	}
 
 	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
 	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
