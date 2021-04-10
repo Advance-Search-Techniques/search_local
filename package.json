@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "install": "node-gyp rebuild",
-    "test": "ts-node test.ts"
+    "test": "ts-node ./test/test.ts",
+    "build":"tsc"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Qin Xi",
+  "license": "MIT",
   "dependencies": {
     "bindings": "^1.5.0",
     "nan": "^2.14.2"
