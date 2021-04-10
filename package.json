@@ -8,7 +8,7 @@
     "test": "ts-node ./test/test.ts",
     "build":"tsc"
   },
-  "author": "Qin Xi",
+  "author": "Qin Xu",
   "license": "MIT",
   "dependencies": {
     "bindings": "^1.5.0",
