@@ -93,12 +93,12 @@ NAN_METHOD(DataBase::Execute) {
 			v8::Local<v8::Object> obj = info[1]->ToObject(context).ToLocalChecked();
 			v8::Local<v8::Array> props = obj->GetPropertyNames(context).ToLocalChecked();
 			StringContainer stringContainer;
-			for (int i = 0; i<props->Length();++i) {
+			for (uint32_t i = 0; i<props->Length();++i) {
 				std::vector<std::string> sc;
 				v8::Local<v8::Object> subObj = 
 				props->Get(context,i).ToLocalChecked()->ToObject(context).ToLocalChecked();
 				v8::Local<v8::Array> subProps = subObj->GetPropertyNames(context).ToLocalChecked();
-				for (int j = 0;j<subProps->Length();++j) {
+				for (uint32_t j = 0;j<subProps->Length();++j) {
 					sc.push_back(*Nan::Utf8String(subProps->Get(context,i).ToLocalChecked()));
 				}
 				stringContainer.push_back(sc);
@@ -253,45 +253,31 @@ NAN_METHOD(DataBase::GetResult) {
 
 	DataBase* self = Nan::ObjectWrap::Unwrap<DataBase>(info.This());
 	v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
-	v8::Local<v8::Array> contents = Nan::New<v8::Array>();
-	v8::Local<v8::Array> content = Nan::New<v8::Array>();
-	v8::Local<v8::Array> locs = Nan::New<v8::Array>();
-	v8::Local<v8::Array> loc = Nan::New<v8::Array>();
-	v8::Local<v8::Object> points = Nan::New<v8::Object>();
-	v8::Local<v8::Array> scores = Nan::New<v8::Array>();
-
-	const InfoContainer& container = self->getInfo();
-	uint32_t i=0;
-	uint32_t j;
-	for (const InfoTuple& tuple : container) {
-		j = 0;
-		for (const std::string& each : std::get<0>(tuple)) {
-			content->Set(context,j++,Nan::New(each).ToLocalChecked());
+	v8::Local<v8::Array> result = Nan::New<v8::Array>();
+	for (size_t k = 0 ;k<self->ic.size();++k) {
+		v8::Local<v8::Array> oneTuple = Nan::New<v8::Array>();
+		v8::Local<v8::Array> contents = Nan::New<v8::Array>();
+		const Container<std::string>& content= std::get<0>(self->ic[k]);
+		for (size_t i = 0;i<content.size();++i) {
+			contents->Set(context,i,Nan::New(content[i]).ToLocalChecked());
 		}
-		contents->Set(context,i,content);
-		content.Clear();
-		j=0;
-		for (const std::pair<int64_t,int64_t>& each : std::get<1>(tuple)) {
-			points->Set(context,Nan::New("start").ToLocalChecked(),
-			Nan::New(static_cast<int32_t>(each.first)));
-			points->Set(context,Nan::New("end").ToLocalChecked(),
-			Nan::New(static_cast<int32_t>(each.second)));
-			loc->Set(context,j++,points);
-			points.Clear();
+		oneTuple->Set(context,0,contents);
+		v8::Local<v8::Array> locs = Nan::New<v8::Array>();
+		const Container<std::pair<int64_t,int64_t>>& loc = std::get<1>(self->ic[k]);
+		for (size_t i = 0;i<loc.size();++i) {
+			v8::Local<v8::Object> pos = Nan::New<v8::Object>();
+			pos->Set(context,Nan::New("start").ToLocalChecked(),
+			Nan::New(static_cast<int32_t>(loc[i].first)));
+			pos->Set(context,Nan::New("end").ToLocalChecked(),
+			Nan::New(static_cast<int32_t>(loc[i].second)));
+			locs->Set(context,i,pos);
 		}
-		locs->Set(context,i,loc);
-		loc.Clear();
-		scores->Set(context,i,Nan::New(static_cast<int32_t>(*(std::get<2>(tuple).end()-1))));
-		i=i+1;
+		oneTuple->Set(context,1,locs);
+		const Container<std::int64_t>& scores = std::get<2>(self->ic[k]);
+		oneTuple->Set(context,2,Nan::New(static_cast<int32_t>(*(scores.end()-1))));
+		result->Set(context,k,oneTuple);
 	}
-	v8::Local<v8::Object> result = Nan::New<v8::Object>();
-	result->Set(context,Nan::New("contents").ToLocalChecked(),
-	contents);
-	result->Set(context,Nan::New("locs").ToLocalChecked(),
-	locs);
-	result->Set(context,Nan::New("scores").ToLocalChecked(),
-	scores);
-
+	
 	info.GetReturnValue().Set(result);
 }
 DataBase::~DataBase()
